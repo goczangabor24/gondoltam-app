@@ -46,7 +46,6 @@ st.markdown("""
 1. Válassz egy kódot és oszd meg a haveroddal.
 2. Mindketten írjatok be egy számot **1 és 10** között.
 3. Nyomjátok meg a **Gondoltam** gombot.
-4. A különbséget a soron következőnek meg kell innia! 🍻
 """)
 
 st.divider()
@@ -68,8 +67,6 @@ col_submit, col_reset = st.columns([2, 1])
 with col_submit:
     if st.button("Gondoltam", use_container_width=True, type="primary"):
         submit_value(room, player, float(value))
-        st.success("Szám rögzítve!")
-        time.sleep(1)
         st.rerun()
 
 with col_reset:
@@ -82,6 +79,7 @@ st.divider()
 room_state = get_room(room)
 a = room_state["A"]
 b = room_state["B"]
+last_update = room_state.get("updated", 0)
 
 st.subheader("Állapot")
 s1, s2 = st.columns(2)
@@ -91,45 +89,38 @@ s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Vár...")
 st.divider()
 
 if a is not None and b is not None:
-    diff_abs = int(abs(a - b))
+    diff_abs = abs(a - b)
     
-    # Animáció szövege
-    popup_text = "BESZOPTAD!<br>HÚZÓRA! 💀" if diff_abs == 0 else f"Igyál {diff_abs} kortyot! 🍻"
-    
-    # Felugró overlay, ami 2 másodperc után garantáltan eltűnik (JS)
-    st.markdown(
-        f"""
-        <div id="popup-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none; background-color: rgba(0,0,0,0.8); width: 100vw; height: 100vh;">
-            <div style="font-size: 150px; animation: bounce 0.5s infinite alternate;">🍻</div>
-            <div style="color: white; font-size: 50px; font-weight: bold; text-align: center; font-family: sans-serif; padding: 20px;">{popup_text}</div>
-        </div>
-        <script>
-            setTimeout(function(){{
-                document.getElementById('popup-container').style.display = 'none';
-            }}, 2000);
-        </script>
-        <style>
-        @keyframes bounce {{
-            from {{ transform: scale(1); }}
-            to {{ transform: scale(1.2); }}
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    # CSAK AKKOR mutatjuk az animációt, ha az utolsó frissítés óta nem telt el 3 másodperc
+    if int(time.time()) - last_update < 3:
+        popup_text = "BESZOPTAD!<br>HÚZÓRA! 💀" if diff_abs == 0 else "EGÉSZSÉGEDRE! 🍻"
+        st.markdown(
+            f"""
+            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none; background-color: rgba(0,0,0,0.85); width: 100vw; height: 100vh;">
+                <div style="font-size: 150px; animation: bounce 0.5s infinite alternate;">🍻</div>
+                <div style="color: white; font-size: 50px; font-weight: bold; text-align: center; font-family: sans-serif; padding: 20px;">{popup_text}</div>
+            </div>
+            <style>
+            @keyframes bounce {{
+                from {{ transform: scale(1); }}
+                to {{ transform: scale(1.2); }}
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
 
     res1, res2, res3 = st.columns(3)
     res1.write(f"**A** száma: {a:g}")
     res2.write(f"**B** száma: {b:g}")
-    res3.write(f"**Különbség:** {diff_abs}")
+    res3.write(f"**Különbség:** {diff_abs:g}")
     
     if diff_abs == 0:
         st.error("### BESZOPTAD, HÚZÓRA! 💀")
     else:
-        st.success(f"Igyál {diff_abs} kortyot! 🍻")
+        st.success(f"A különbség **{diff_abs:g}**! 🍻")
 else:
     st.info("Várakozás a másikra...")
 
-# Folyamatos frissítés
 time.sleep(1)
 st.rerun()
