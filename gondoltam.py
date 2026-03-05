@@ -9,7 +9,7 @@ st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
-# CSS: Tömörítés
+# CSS: Tömörítés és térközök finomhangolása
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -24,7 +24,13 @@ st.markdown("""
         padding-right: 1rem !important;
     }
     
-    h1 { font-size: 1.8rem !important; margin-bottom: 0.5rem !important; }
+    /* A cím alatti térköz csökkentése */
+    h1 { 
+        font-size: 1.8rem !important; 
+        margin-bottom: -15px !important; 
+        padding-bottom: 0px !important;
+    }
+    
     h3 { font-size: 1.1rem !important; margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
     p, li { font-size: 0.85rem !important; line-height: 1.2 !important; }
     div.stMarkdown { margin-bottom: -10px !important; }
@@ -166,5 +172,3 @@ s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Mivanmá...?"
 
 time.sleep(1)
 st.rerun()
-
-
