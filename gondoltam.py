@@ -4,18 +4,13 @@ import streamlit as st
 
 st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 
-# CSS trükk az elemek elrejtéséhez és a szövegméretekhez
+# CSS trükk az elemek elrejtéséhez
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     [data-testid="stStatusWidget"] {display: none !important;}
-    /* Kisebb feliratok a státuszhoz */
-    .small-status {
-        font-size: 0.85rem;
-        color: #888;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -43,22 +38,24 @@ def get_room(room: str):
     with store["lock"]:
         return dict(store["rooms"].get(room, {"A": None, "B": None, "updated": 0}))
 
-# --- CÍM ---
+# --- CÍM (Ez mindig látszik) ---
 st.title("🍺 Gondoltam")
 
-# Adatok lekérése
+# Adatok lekérése az elején
 room_input = st.sidebar.text_input("Szoba (ha váltani akarsz)", value="buli-1").strip()
-room = room_input
+room = room_input # Használjuk a bemenetet
 room_state = get_room(room)
 a = room_state["A"]
 b = room_state["B"]
 last_update = room_state.get("updated", 0)
 
 # --- EREDMÉNY NÉZET ---
+# Ha mindketten beküldték, ez a blokk veszi át az irányítást
 if a is not None and b is not None:
     diff_abs = int(abs(a - b))
     elapsed = time.time() - last_update
 
+    # 1. ANIMÁCIÓ (Csak az első 2 másodpercben)
     if elapsed < 2:
         popup_text = "BESZOPTAD!<br>HÚZÓRA! 💀" if diff_abs == 0 else f"Igyál {diff_abs} kortyot! 🍻"
         st.markdown(
@@ -74,44 +71,35 @@ if a is not None and b is not None:
             unsafe_allow_html=True
         )
 
+    # 2. TISZTA OLDAL (Csak a különbség és az új kör gomb)
     st.markdown(f"<h1 style='text-align: center; font-size: 80px;'>{diff_abs}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='text-align: center;'>{'Kortyszám' if diff_abs != 0 else 'HÚZÓRA!'}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center;'>{'Különbség (korty)' if diff_abs != 0 else 'HÚZÓRA!'}</h3>", unsafe_allow_html=True)
     
     st.write("")
     if st.button("✨ ÚJ KÖR", use_container_width=True, type="primary"):
         reset_room(room)
         st.rerun()
     
+    # Itt megállítjuk a futást, így nem rajzolja ki a szabályokat és az inputokat
     time.sleep(1)
     st.rerun()
     st.stop()
 
-# --- JÁTÉK NÉZET ---
-
-# 1. SZABÁLYOK (Kicsiben)
+# --- JÁTÉK NÉZET (Csak akkor látszik, ha nincs kész az eredmény) ---
 st.markdown("""
-<small>
-<b>Szabályok:</b> 1. Közös kód. 2. Szám 1-10 között. 3. Gondoltam gomb. 
-4. Soron lévő issza a különbséget. 5. Telitalálatnál húzóra!
-</small>
-""", unsafe_allow_html=True)
+### Szabályok:
+1. Ugyanaz a kód legyen a haverotokkal!
+2. Mindketten írjatok be egy számot **1 és 10** között.
+3. Nyomjátok meg a **Gondoltam** gombot.
+4. Aki épp soron van, a különbséget meg kell, hogy igya.
+5. Ha eltalálja mire gondolt a másik, húzóra kell meginnia, annak, aki gondolt.
+""")
 
 st.divider()
 
-# 2. ÁLLAPOT (Kisebb formátumban, a beviteli mezők előtt)
-s1, s2 = st.columns(2)
-with s1:
-    txt_a = "✅ Kész" if a is not None else "⏳ Mivanmá...?"
-    st.markdown(f"<div class='small-status'>'A' játékos: {txt_a}</div>", unsafe_allow_html=True)
-with s2:
-    txt_b = "✅ Kész" if b is not None else "⏳ Mivanmá...?"
-    st.markdown(f"<div class='small-status'>'B' játékos: {txt_b}</div>", unsafe_allow_html=True)
-
-st.write("") # Kis helyköz
-
-# 3. BEVITELI MEZŐK
 c1, c2 = st.columns(2)
 with c1:
+    # A szobakódot itt is megjelenítjük az elején
     room = st.text_input("Szoba kódja", value=room).strip()
 with c2:
     player = st.radio("Te vagy:", ["A", "B"], horizontal=True)
@@ -122,6 +110,13 @@ if st.button("Gondoltam", use_container_width=True, type="primary"):
     submit_value(room, player, float(value))
     st.rerun()
 
-# Folyamatos frissítés
+st.divider()
+st.subheader("Állapot")
+s1, s2 = st.columns(2)
+s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Mivanmá...?")
+s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Mivanmá...?")
+
+# Folyamatos frissítés, amíg várunk
 time.sleep(1)
 st.rerun()
+
