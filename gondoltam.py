@@ -4,12 +4,21 @@ import streamlit as st
 
 st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 
+# CSS trükk a frissítés ikon (spinner) elrejtéséhez
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    [data-testid="stStatusWidget"] {display: none !important;}
+    </style>
+    """, unsafe_allow_html=True)
+
 @st.cache_resource
 def get_store():
-    # Közös tárhely a szerveren minden session számára
     return {
         "lock": threading.Lock(),
-        "rooms": {}  # room_code -> {"A": float|None, "B": float|None, "updated": int}
+        "rooms": {}
     }
 
 def submit_value(room: str, player: str, value: float):
@@ -30,7 +39,6 @@ def get_room(room: str):
         return dict(store["rooms"].get(room, {"A": None, "B": None, "updated": 0}))
 
 # --- UI ---
-
 st.title("🍺 Gondoltam")
 
 st.markdown("""
@@ -71,41 +79,34 @@ with col_reset:
 
 st.divider()
 
-# Adatok lekérése
 room_state = get_room(room)
 a = room_state["A"]
 b = room_state["B"]
 
 st.subheader("Állapot")
 s1, s2 = st.columns(2)
-
-s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Mivanmá?")
-s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Mivanmá?")
+s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Vár...")
+s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Vár...")
 
 st.divider()
 
-# Eredmény megjelenítése
 if a is not None and b is not None:
     diff_abs = abs(a - b)
     
-    # Eltűnő koccintás animáció
+    # Középre felugró animáció (0 esetén más szöveggel)
+    popup_text = "BESZOPTAD!<br>HÚZÓRA! 💀" if diff_abs == 0 else "EGÉSZSÉGEDRE! 🍻"
+    
     st.markdown(
-        """
-        <div id="cheers-container" style="display: flex; justify-content: center; align-items: center; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; pointer-events: none;">
-            <div style="font-size: 150px; animation: pop 0.5s ease-out;">🍻</div>
+        f"""
+        <div id="popup-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; pointer-events: none; background-color: rgba(0,0,0,0.8); width: 100vw; height: 100vh;">
+            <div style="font-size: 150px;">🍻</div>
+            <div style="color: white; font-size: 50px; font-weight: bold; text-align: center; font-family: sans-serif;">{popup_text}</div>
         </div>
         <script>
-            setTimeout(function(){
-                document.getElementById('cheers-container').style.display = 'none';
-            }, 1000);
+            setTimeout(function(){{
+                document.getElementById('popup-container').style.display = 'none';
+            }}, 1500);
         </script>
-        <style>
-        @keyframes pop {
-            0% { transform: scale(0); rotate: -20deg; }
-            70% { transform: scale(1.5); rotate: 10deg; }
-            100% { transform: scale(1.2); rotate: 0deg; }
-        }
-        </style>
         """,
         unsafe_allow_html=True
     )
@@ -116,13 +117,11 @@ if a is not None and b is not None:
     res3.write(f"**Különbség:** {diff_abs:g}")
     
     if diff_abs == 0:
-        st.error("### BESZOPTAD, HÚZÓRA! 💀🍻")
-        st.snow() # Egy kis extra effekt a büntetéshez
+        st.error("### BESZOPTAD, HÚZÓRA! 💀")
     else:
-        st.success(f"A különbség **{diff_abs:g}**! Egészségedre! 🍻")
+        st.success(f"A különbség **{diff_abs:g}**! 🍻")
 else:
-    st.info("Innék...")
+    st.info("Várakozás a másikra...")
 
-# Automatikus frissítés (1 mp)
 time.sleep(1)
 st.rerun()
