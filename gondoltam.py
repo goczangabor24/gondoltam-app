@@ -4,13 +4,37 @@ import streamlit as st
 
 st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 
-# CSS trükk az elemek elrejtéséhez
+# CSS trükk a tömörítéshez: margók, paddingek és betűméretek csökkentése
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     [data-testid="stStatusWidget"] {display: none !important;}
+    
+    /* Teljes oldal margójának nullázása */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 0rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Cím és szövegek méretének csökkentése */
+    h1 { font-size: 1.8rem !important; margin-bottom: 0.5rem !important; }
+    h3 { font-size: 1.1rem !important; margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+    p, li { font-size: 0.85rem !important; line-height: 1.2 !important; }
+    div.stMarkdown { margin-bottom: -10px !important; }
+    
+    /* Divider közének csökkentése */
+    hr { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+    
+    /* Inputok és gombok közötti távolság */
+    .stNumberInput, .stTextInput, .stRadio { margin-bottom: -15px !important; }
+    
+    /* Metric widgetek zsugorítása */
+    [data-testid="stMetricValue"] { font-size: 1.2rem !important; }
+    [data-testid="stMetricLabel"] { font-size: 0.8rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -38,24 +62,22 @@ def get_room(room: str):
     with store["lock"]:
         return dict(store["rooms"].get(room, {"A": None, "B": None, "updated": 0}))
 
-# --- CÍM (Ez mindig látszik) ---
+# --- CÍM ---
 st.title("🍺 Gondoltam")
 
-# Adatok lekérése az elején
+# Adatok lekérése
 room_input = st.sidebar.text_input("Szoba (ha váltani akarsz)", value="buli-1").strip()
-room = room_input # Használjuk a bemenetet
+room = room_input
 room_state = get_room(room)
 a = room_state["A"]
 b = room_state["B"]
 last_update = room_state.get("updated", 0)
 
 # --- EREDMÉNY NÉZET ---
-# Ha mindketten beküldték, ez a blokk veszi át az irányítást
 if a is not None and b is not None:
     diff_abs = int(abs(a - b))
     elapsed = time.time() - last_update
 
-    # 1. ANIMÁCIÓ (Csak az első 2 másodpercben)
     if elapsed < 2:
         popup_text = "BESZOPTAD!<br>HÚZÓRA! 💀" if diff_abs == 0 else f"Igyál {diff_abs} kortyot! 🍻"
         st.markdown(
@@ -71,21 +93,18 @@ if a is not None and b is not None:
             unsafe_allow_html=True
         )
 
-    # 2. TISZTA OLDAL (Csak a különbség és az új kör gomb)
     st.markdown(f"<h1 style='text-align: center; font-size: 80px;'>{diff_abs}</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center;'>{'Különbség (korty)' if diff_abs != 0 else 'HÚZÓRA!'}</h3>", unsafe_allow_html=True)
     
-    st.write("")
     if st.button("✨ ÚJ KÖR", use_container_width=True, type="primary"):
         reset_room(room)
         st.rerun()
     
-    # Itt megállítjuk a futást, így nem rajzolja ki a szabályokat és az inputokat
     time.sleep(1)
     st.rerun()
     st.stop()
 
-# --- JÁTÉK NÉZET (Csak akkor látszik, ha nincs kész az eredmény) ---
+# --- JÁTÉK NÉZET ---
 st.markdown("""
 ### Szabályok:
 1. Ugyanaz a kód legyen a haverotokkal!
@@ -99,7 +118,6 @@ st.divider()
 
 c1, c2 = st.columns(2)
 with c1:
-    # A szobakódot itt is megjelenítjük az elején
     room = st.text_input("Szoba kódja", value=room).strip()
 with c2:
     player = st.radio("Te vagy:", ["A", "B"], horizontal=True)
@@ -116,7 +134,5 @@ s1, s2 = st.columns(2)
 s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Mivanmá...?")
 s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Mivanmá...?")
 
-# Folyamatos frissítés, amíg várunk
 time.sleep(1)
 st.rerun()
-
