@@ -111,9 +111,10 @@ if st.button("Gondoltam", use_container_width=True, type="primary"):
 st.divider()
 st.subheader("Állapot")
 s1, s2 = st.columns(2)
-s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Vár...")
-s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Vár...")
+s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Mivanmá...?")
+s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Mivanmá...?")
 
 # Folyamatos frissítés, amíg várunk
 time.sleep(1)
 st.rerun()
+
