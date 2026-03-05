@@ -136,10 +136,11 @@ if a is not None and b is not None:
 st.markdown("""
 ### Szabályok:
 1. Ugyanaz a kód legyen a haverotokkal!
-2. Mindketten írjatok be egy számot **1 és 10** között.
-3. Nyomjátok meg a **Gondoltam** gombot.
-4. Aki épp soron van, a különbséget meg kell, hogy igya.
-5. Ha eltalálja mire gondolt a másik, akkor a másiknak kell húzóra meginnia, ami előtte van.
+2. Válasszátok ki, ki az A és B játékos!
+2. Mindketten írjatok be egy számot **1 és 10** között!
+3. Nyomjátok meg a **Gondoltam** gombot!
+4. Aki épp soron van, a különbséget meg kell, hogy igya!
+5. Ha eltalálja mire gondolt a másik, akkor a másiknak kell húzóra meginnia, ami előtte van!
 """)
 
 st.divider()
@@ -165,4 +166,5 @@ s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Mivanmá...?"
 
 time.sleep(1)
 st.rerun()
+
 
