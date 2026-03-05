@@ -139,7 +139,7 @@ st.markdown("""
 2. Mindketten írjatok be egy számot **1 és 10** között.
 3. Nyomjátok meg a **Gondoltam** gombot.
 4. Aki épp soron van, a különbséget meg kell, hogy igya.
-5. Ha eltalálja mire gondolt a másik, húzóra kell meginnia, annak, aki gondolt.
+5. Ha eltalálja mire gondolt a másik, akkor a másiknak kell húzóra meginnia, ami előtte van.
 """)
 
 st.divider()
@@ -165,3 +165,4 @@ s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Mivanmá...?"
 
 time.sleep(1)
 st.rerun()
+
