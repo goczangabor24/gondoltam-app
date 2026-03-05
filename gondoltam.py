@@ -50,6 +50,7 @@ st.markdown("""
 
 st.divider()
 
+# Szoba és játékos választás
 c1, c2 = st.columns(2)
 with c1:
     room = st.text_input("Szoba kódja", value="buli-1").strip()
@@ -60,40 +61,38 @@ if not room:
     st.warning("Adj meg egy szobakódot!")
     st.stop()
 
-value = st.number_input("Melyik számra gondoltál? (1-10)", min_value=1.0, max_value=10.0, value=1.0, step=1.0, format="%.0f")
-
-col_submit, col_reset = st.columns([2, 1])
-
-with col_submit:
-    if st.button("Gondoltam", use_container_width=True, type="primary"):
-        submit_value(room, player, float(value))
-        st.rerun()
-
-with col_reset:
-    if st.button("Új kör", use_container_width=True):
-        reset_room(room)
-        st.rerun()
-
-st.divider()
-
 room_state = get_room(room)
 a = room_state["A"]
 b = room_state["B"]
 last_update = room_state.get("updated", 0)
+
+# Szám bevitele - Csak akkor látszik, ha még nincs meg mindkét eredmény
+if a is None or b is None:
+    value = st.number_input("Melyik számra gondoltál? (1-10)", min_value=1.0, max_value=10.0, value=1.0, step=1.0, format="%.0f")
+    if st.button("Gondoltam", use_container_width=True, type="primary"):
+        submit_value(room, player, float(value))
+        st.rerun()
+
+st.divider()
 
 st.subheader("Állapot")
 s1, s2 = st.columns(2)
 s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Vár...")
 s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Vár...")
 
-st.divider()
-
+# EREDMÉNY ÉS ANIMÁCIÓ
 if a is not None and b is not None:
-    diff_abs = abs(a - b)
+    st.divider()
+    diff_abs = int(abs(a - b))
     
-    # CSAK AKKOR mutatjuk az animációt, ha az utolsó frissítés óta nem telt el 3 másodperc
+    # Felugró animáció szövege
+    if diff_abs == 0:
+        popup_text = "BESZOPTAD!<br>HÚZÓRA! 💀"
+    else:
+        popup_text = f"Igyál {diff_abs} kortyot! 🍻"
+    
+    # Animáció megjelenítése (3 másodpercig)
     if int(time.time()) - last_update < 3:
-        popup_text = "BESZOPTAD!<br>HÚZÓRA! 💀" if diff_abs == 0 else "EGÉSZSÉGEDRE! 🍻"
         st.markdown(
             f"""
             <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none; background-color: rgba(0,0,0,0.85); width: 100vw; height: 100vh;">
@@ -110,17 +109,25 @@ if a is not None and b is not None:
             unsafe_allow_html=True
         )
 
+    # Részletes eredmények
     res1, res2, res3 = st.columns(3)
-    res1.write(f"**A** száma: {a:g}")
-    res2.write(f"**B** száma: {b:g}")
-    res3.write(f"**Különbség:** {diff_abs:g}")
+    res1.write(f"**A** száma: **{a:g}**")
+    res2.write(f"**B** száma: **{b:g}**")
+    res3.write(f"**Különbség:** **{diff_abs}**")
     
     if diff_abs == 0:
         st.error("### BESZOPTAD, HÚZÓRA! 💀")
     else:
-        st.success(f"A különbség **{diff_abs:g}**! 🍻")
+        st.success(f"Igyál {diff_abs} kortyot! 🍻")
+
+    # ÚJ KÖR GOMB - Csak az eredmény után ugrik fel
+    st.write("") 
+    if st.button("✨ Új kör", use_container_width=True):
+        reset_room(room)
+        st.rerun()
 else:
     st.info("Várakozás a másikra...")
 
+# Automatikus frissítés
 time.sleep(1)
 st.rerun()
