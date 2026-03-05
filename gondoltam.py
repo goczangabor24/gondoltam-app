@@ -33,11 +33,10 @@ def get_room(room: str):
 
 st.title("🍺 Gondoltam")
 
-# Egyszerű lista a lenyíló fül helyett
 st.markdown("""
 ### Szabályok:
 1. Válassz egy kódot és oszd meg a haveroddal.
-2. Mindketten írjatok be egy számot 1 és 10 között.
+2. Mindketten írjatok be egy számot **1 és 10** között.
 3. Nyomjátok meg a **Gondoltam** gombot.
 4. A különbséget a soron következőnek meg kell innia! 🍻
 """)
@@ -54,7 +53,6 @@ if not room:
     st.warning("Adj meg egy szobakódot!")
     st.stop()
 
-# Itt korlátoztam 1 és 10 közé a választást
 value = st.number_input("Melyik számra gondoltál? (1-10)", min_value=1.0, max_value=10.0, value=1.0, step=1.0, format="%.0f")
 
 col_submit, col_reset = st.columns([2, 1])
@@ -81,7 +79,6 @@ b = room_state["B"]
 st.subheader("Állapot")
 s1, s2 = st.columns(2)
 
-# Jelzés, ha valaki már beküldte
 s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Mivanmá?")
 s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Mivanmá?")
 
@@ -91,16 +88,41 @@ st.divider()
 if a is not None and b is not None:
     diff_abs = abs(a - b)
     
+    # Eltűnő koccintás animáció
+    st.markdown(
+        """
+        <div id="cheers-container" style="display: flex; justify-content: center; align-items: center; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; pointer-events: none;">
+            <div style="font-size: 150px; animation: pop 0.5s ease-out;">🍻</div>
+        </div>
+        <script>
+            setTimeout(function(){
+                document.getElementById('cheers-container').style.display = 'none';
+            }, 1000);
+        </script>
+        <style>
+        @keyframes pop {
+            0% { transform: scale(0); rotate: -20deg; }
+            70% { transform: scale(1.5); rotate: 10deg; }
+            100% { transform: scale(1.2); rotate: 0deg; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     res1, res2, res3 = st.columns(3)
     res1.write(f"**A** száma: {a:g}")
     res2.write(f"**B** száma: {b:g}")
     res3.write(f"**Különbség:** {diff_abs:g}")
     
-    st.balloons()
-    st.success(f"A különbség **{diff_abs:g}**! Egészségedre! 🍻")
+    if diff_abs == 0:
+        st.error("### BESZOPTAD, HÚZÓRA! 💀🍻")
+        st.snow() # Egy kis extra effekt a büntetéshez
+    else:
+        st.success(f"A különbség **{diff_abs:g}**! Egészségedre! 🍻")
 else:
     st.info("Innék...")
 
-# Automatikus frissítés a háttérben (1 másodpercenként)
+# Automatikus frissítés (1 mp)
 time.sleep(1)
 st.rerun()
