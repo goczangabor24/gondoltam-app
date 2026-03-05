@@ -4,7 +4,7 @@ import streamlit as st
 
 st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 
-# CSS trükk a frissítés ikon (spinner) elrejtéséhez
+# CSS trükk a frissítés ikon (spinner) és felesleges elemek elrejtéséhez
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -93,20 +93,27 @@ st.divider()
 if a is not None and b is not None:
     diff_abs = abs(a - b)
     
-    # Középre felugró animáció (0 esetén más szöveggel)
+    # Animáció szövege
     popup_text = "BESZOPTAD!<br>HÚZÓRA! 💀" if diff_abs == 0 else "EGÉSZSÉGEDRE! 🍻"
     
+    # Képernyő közepére ugró overlay, ami nem blokkolja a kattintást
     st.markdown(
         f"""
-        <div id="popup-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; pointer-events: none; background-color: rgba(0,0,0,0.8); width: 100vw; height: 100vh;">
-            <div style="font-size: 150px;">🍻</div>
-            <div style="color: white; font-size: 50px; font-weight: bold; text-align: center; font-family: sans-serif;">{popup_text}</div>
+        <div id="popup-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none; background-color: rgba(0,0,0,0.7); width: 100vw; height: 100vh;">
+            <div style="font-size: 150px; animation: bounce 0.5s infinite alternate;">🍻</div>
+            <div style="color: white; font-size: 50px; font-weight: bold; text-align: center; font-family: sans-serif; padding: 20px;">{popup_text}</div>
         </div>
         <script>
             setTimeout(function(){{
                 document.getElementById('popup-container').style.display = 'none';
-            }}, 1500);
+            }}, 2000);
         </script>
+        <style>
+        @keyframes bounce {{
+            from {{ transform: scale(1); }}
+            to {{ transform: scale(1.2); }}
+        }}
+        </style>
         """,
         unsafe_allow_html=True
     )
@@ -123,5 +130,6 @@ if a is not None and b is not None:
 else:
     st.info("Várakozás a másikra...")
 
+# Folyamatos frissítés
 time.sleep(1)
 st.rerun()
