@@ -1,10 +1,15 @@
 import time
 import threading
 import streamlit as st
+import uuid
 
 st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 
-# CSS trükk a tömörítéshez: margók, paddingek és betűméretek csökkentése
+# Egyedi azonosító generálása a böngészőhöz
+if "user_id" not in st.session_state:
+    st.session_state.user_id = str(uuid.uuid4())
+
+# CSS trükk a tömörítéshez és a mobilnézethez
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -12,7 +17,6 @@ st.markdown("""
     header {visibility: hidden;}
     [data-testid="stStatusWidget"] {display: none !important;}
     
-    /* Teljes oldal margójának nullázása */
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 0rem !important;
@@ -20,21 +24,20 @@ st.markdown("""
         padding-right: 1rem !important;
     }
     
-    /* Cím és szövegek méretének csökkentése */
     h1 { font-size: 1.8rem !important; margin-bottom: 0.5rem !important; }
     h3 { font-size: 1.1rem !important; margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
     p, li { font-size: 0.85rem !important; line-height: 1.2 !important; }
     div.stMarkdown { margin-bottom: -10px !important; }
     
-    /* Divider közének csökkentése */
     hr { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
-    
-    /* Inputok és gombok közötti távolság */
     .stNumberInput, .stTextInput, .stRadio { margin-bottom: -15px !important; }
     
-    /* Metric widgetek zsugorítása */
     [data-testid="stMetricValue"] { font-size: 1.2rem !important; }
     [data-testid="stMetricLabel"] { font-size: 0.8rem !important; }
+
+    /* Mobilos oszlopok egymás mellett tartása */
+    [data-testid="column"] { width: 48% !important; flex: 1 1 45% !important; min-width: 45% !important; }
+    div[data-testid="stHorizontalBlock"] { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -45,33 +48,60 @@ def get_store():
         "rooms": {}
     }
 
+def get_or_assign_role(room_code, user_id):
+    store = get_store()
+    with store["lock"]:
+        room_state = store["rooms"].setdefault(room_code, {"A": None, "B": None, "updated": 0, "players": {}})
+        players = room_state["players"]
+        
+        # Ha már van szerepe ebben a szobában, azt adjuk vissza
+        if user_id in players:
+            return players[user_id]
+        
+        # Ha nincs, kiosztjuk az első szabad helyet
+        taken_roles = players.values()
+        if "A" not in taken_roles:
+            players[user_id] = "A"
+        elif "B" not in taken_roles:
+            players[user_id] = "B"
+        else:
+            players[user_id] = "A" # Harmadik embernek alapból A-t ad, de átválthatja
+        
+        return players[user_id]
+
 def submit_value(room: str, player: str, value: float):
     store = get_store()
     with store["lock"]:
-        room_state = store["rooms"].setdefault(room, {"A": None, "B": None, "updated": 0})
+        room_state = store["rooms"].setdefault(room, {"A": None, "B": None, "updated": 0, "players": {}})
         room_state[player] = value
         room_state["updated"] = int(time.time())
 
 def reset_room(room: str):
     store = get_store()
     with store["lock"]:
-        store["rooms"][room] = {"A": None, "B": None, "updated": int(time.time())}
+        # Csak az értékeket nullázzuk, a kiosztott szerepeket (players) megtartjuk
+        if room in store["rooms"]:
+            store["rooms"][room]["A"] = None
+            store["rooms"][room]["B"] = None
+            store["rooms"][room]["updated"] = int(time.time())
 
 def get_room(room: str):
     store = get_store()
     with store["lock"]:
-        return dict(store["rooms"].get(room, {"A": None, "B": None, "updated": 0}))
+        return dict(store["rooms"].get(room, {"A": None, "B": None, "updated": 0, "players": {}}))
 
 # --- CÍM ---
 st.title("🍺 Gondoltam")
 
-# Adatok lekérése
-room_input = st.sidebar.text_input("Szoba (ha váltani akarsz)", value="buli-1").strip()
+room_input = st.sidebar.text_input("Szoba", value="buli-1").strip()
 room = room_input
 room_state = get_room(room)
 a = room_state["A"]
 b = room_state["B"]
 last_update = room_state.get("updated", 0)
+
+# Automatikus szerep lekérése
+assigned_role = get_or_assign_role(room, st.session_state.user_id)
 
 # --- EREDMÉNY NÉZET ---
 if a is not None and b is not None:
@@ -120,7 +150,9 @@ c1, c2 = st.columns(2)
 with c1:
     room = st.text_input("Szoba kódja", value=room).strip()
 with c2:
-    player = st.radio("Te vagy:", ["A", "B"], horizontal=True)
+    # Az indexet az assigned_role alapján állítjuk be (A=0, B=1)
+    role_index = 0 if assigned_role == "A" else 1
+    player = st.radio("Te vagy:", ["A", "B"], index=role_index, horizontal=True)
 
 value = st.number_input("Melyik számra gondoltál? (1-10)", min_value=1.0, max_value=10.0, value=1.0, step=1.0, format="%.0f")
 
