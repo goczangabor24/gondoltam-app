@@ -5,11 +5,11 @@ import uuid
 
 st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 
-# Egyedi azonosító a böngészőhöz
+# Egy egyedi azonosító a böngészőhöz
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
-# CSS: Maximális tömörítés és térköz-eltüntetés
+# CSS: Tömörítés finomhangolása, hogy ne csússzanak egymásra a sorok
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -27,26 +27,26 @@ st.markdown("""
     /* Cím alatti térköz */
     h1 { 
         font-size: 1.8rem !important; 
-        margin-bottom: -25px !important; 
-        padding-bottom: 0px !important;
-    }
-    
-    /* "Szabályok" felirat alatti és feletti térköz */
-    h3 { 
-        font-size: 1.1rem !important; 
-        margin-top: 0px !important; 
         margin-bottom: -15px !important; 
         padding-bottom: 0px !important;
     }
     
-    /* Listaelemek (szabálypontok) közötti hézag */
+    /* "Szabályok" felirat: felette nincs hely, alatta pici biztonsági távolság */
+    h3 { 
+        font-size: 1.1rem !important; 
+        margin-top: 0px !important; 
+        margin-bottom: 5px !important; 
+        padding-bottom: 0px !important;
+    }
+    
+    /* Listaelemek (szabálypontok) */
     p, li { 
         font-size: 0.85rem !important; 
-        line-height: 1.1 !important; 
+        line-height: 1.2 !important; 
         margin-bottom: 2px !important;
     }
     
-    div.stMarkdown { margin-bottom: -15px !important; }
+    div.stMarkdown { margin-bottom: -10px !important; }
     
     hr { margin-top: 0.3rem !important; margin-bottom: 0.3rem !important; }
     .stNumberInput, .stTextInput, .stRadio { margin-bottom: -15px !important; }
@@ -131,7 +131,7 @@ if a is not None and b is not None:
             f"""
             <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none; background-color: rgba(0,0,0,0.9); width: 100vw; height: 100vh;">
                 <div style="font-size: 150px; animation: bounce 0.5s infinite alternate;">🍻</div>
-                <div style="color: white; font-size: 50px; font-weight: bold; text-align: center; font-family: sans-serif; padding: 20px;">{popup_text}</div>
+                <div style="color: white; font-size: 40px; font-weight: bold; text-align: center; font-family: sans-serif; padding: 20px;">{popup_text}</div>
             </div>
             <style>
             @keyframes bounce {{ from {{ transform: scale(1); }} to {{ transform: scale(1.2); }} }}
