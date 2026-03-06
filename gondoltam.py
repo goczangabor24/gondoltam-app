@@ -8,7 +8,7 @@ st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
-# CSS: Tömörítés és egyedi térközök
+# CSS: Biztonságos tömörítés (egymásra csúszás nélkül)
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -23,29 +23,36 @@ st.markdown("""
         padding-right: 1rem !important;
     }
     
-    /* Cím alatti térköz */
+    /* Cím: nincs alsó margó */
     h1 { 
         font-size: 1.8rem !important; 
-        margin-bottom: -15px !important; 
-    }
-    
-    /* "Szabályok" felirat alatti extrém szűkítés */
-    h3 { 
-        font-size: 1.1rem !important; 
-        margin-top: 0px !important; 
-        margin-bottom: -12px !important; 
+        margin-bottom: 0px !important; 
         padding-bottom: 0px !important;
     }
     
-    /* Listaelemek (szabálypontok) */
-    p, li { 
-        font-size: 0.85rem !important; 
-        line-height: 1.2 !important; 
-        margin-bottom: 2px !important;
+    /* Szabályok cím: nulla felső margó, minimális alsó */
+    h3 { 
+        font-size: 1.1rem !important; 
+        margin-top: 0px !important; 
+        margin-bottom: 2px !important; 
+        padding-top: 0px !important;
     }
     
-    hr { margin-top: 0.3rem !important; margin-bottom: 0.3rem !important; }
-    .stNumberInput, .stTextInput, .stRadio { margin-bottom: -15px !important; }
+    /* Listaelemek: sűrű sorköz, de nincs negatív margó */
+    p, li { 
+        font-size: 0.85rem !important; 
+        line-height: 1.1 !important; 
+        margin-bottom: 1px !important;
+        margin-top: 0px !important;
+    }
+    
+    /* Markdown blokkok közötti felesleges hely eltüntetése */
+    .element-container, .stMarkdown {
+        margin-bottom: 0px !important;
+    }
+    
+    hr { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+    .stNumberInput, .stTextInput, .stRadio { margin-bottom: -10px !important; }
     
     [data-testid="stMetricValue"] { font-size: 1.2rem !important; }
     [data-testid="stMetricLabel"] { font-size: 0.8rem !important; }
@@ -90,7 +97,7 @@ def get_room(room: str):
     with store["lock"]:
         return dict(store["rooms"].get(room, {"A": None, "B": None, "updated": 0, "players": {}}))
 
-# --- FŐ LOGIKA ---
+# --- UI ---
 st.title("🍺 Gondoltam")
 
 room_input = st.sidebar.text_input("Szoba", value="buli-1").strip()
@@ -100,8 +107,8 @@ a, b = room_state.get("A"), room_state.get("B")
 last_update = room_state.get("updated", 0)
 assigned_role = get_or_assign_role(room, st.session_state.user_id)
 
-# --- 1. ESET: VAN EREDMÉNY ---
 if a is not None and b is not None:
+    # --- EREDMÉNY NÉZET ---
     diff_abs = int(abs(a - b))
     elapsed = time.time() - last_update
 
@@ -116,9 +123,9 @@ if a is not None and b is not None:
             """, unsafe_allow_html=True)
 
     st.markdown(f"""
-        <div style="text-align: center; margin-top: 30px; margin-bottom: 10px;">
+        <div style="text-align: center; margin-top: 20px; margin-bottom: 10px;">
             <div style="font-size: 110px; font-weight: bold; line-height: 1; color: #FF4B4B;">{diff_abs}</div>
-            <div style="font-size: 22px; margin-top: 15px; margin-bottom: 25px; font-weight: bold;">
+            <div style="font-size: 22px; margin-top: 10px; margin-bottom: 20px; font-weight: bold;">
                 {'Különbség (korty)' if diff_abs != 0 else 'HÚZÓRA!'}
             </div>
         </div>
@@ -131,8 +138,8 @@ if a is not None and b is not None:
     time.sleep(1)
     st.rerun()
 
-# --- 2. ESET: JÁTÉK FOLYAMATBAN ---
 else:
+    # --- JÁTÉK NÉZET ---
     st.markdown("""
     ### Szabályok:
     1. Ugyanaz a kód legyen a haverotokkal!
