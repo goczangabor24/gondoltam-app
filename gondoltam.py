@@ -8,19 +8,45 @@ st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
-# CSS: Tömörítés
+# CSS: Tömörítés és egyedi térközök
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     [data-testid="stStatusWidget"] {display: none !important;}
-    .block-container { padding-top: 0.5rem !important; padding-bottom: 0rem !important; padding-left: 1rem !important; padding-right: 1rem !important; }
-    h1 { font-size: 1.8rem !important; margin-bottom: -15px !important; }
-    h3 { font-size: 1.1rem !important; margin-top: 0px !important; margin-bottom: 8px !important; }
-    p, li { font-size: 0.85rem !important; line-height: 1.2 !important; margin-bottom: 2px !important; }
+    
+    .block-container {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Cím alatti térköz */
+    h1 { 
+        font-size: 1.8rem !important; 
+        margin-bottom: -15px !important; 
+    }
+    
+    /* "Szabályok" felirat alatti extrém szűkítés */
+    h3 { 
+        font-size: 1.1rem !important; 
+        margin-top: 0px !important; 
+        margin-bottom: -12px !important; 
+        padding-bottom: 0px !important;
+    }
+    
+    /* Listaelemek (szabálypontok) */
+    p, li { 
+        font-size: 0.85rem !important; 
+        line-height: 1.2 !important; 
+        margin-bottom: 2px !important;
+    }
+    
     hr { margin-top: 0.3rem !important; margin-bottom: 0.3rem !important; }
     .stNumberInput, .stTextInput, .stRadio { margin-bottom: -15px !important; }
+    
     [data-testid="stMetricValue"] { font-size: 1.2rem !important; }
     [data-testid="stMetricLabel"] { font-size: 0.8rem !important; }
     </style>
@@ -102,7 +128,6 @@ if a is not None and b is not None:
         reset_room(room)
         st.rerun()
     
-    # Automatikus frissítés, hogy lássuk, ha a másik megnyomta az új kört
     time.sleep(1)
     st.rerun()
 
@@ -135,9 +160,8 @@ else:
     st.divider()
     st.subheader("Állapot")
     s1, s2 = st.columns(2)
-    s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Vár...")
-    s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Vár...")
+    s1.metric(" 'A' játékos", "✅ Kész" if a is not None else "⏳ Mivanmá...?")
+    s2.metric(" 'B' játékos", "✅ Kész" if b is not None else "⏳ Mivanmá...?")
 
-    # Folyamatos figyelés, hogy elindult-e a kör
     time.sleep(1)
     st.rerun()
