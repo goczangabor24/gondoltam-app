@@ -9,7 +9,7 @@ st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
-# CSS: Tömörítés finomhangolása, hogy ne csússzanak egymásra a sorok
+# CSS: Tömörítés finomhangolása
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -24,14 +24,12 @@ st.markdown("""
         padding-right: 1rem !important;
     }
     
-    /* Cím alatti térköz */
     h1 { 
         font-size: 1.8rem !important; 
         margin-bottom: -15px !important; 
         padding-bottom: 0px !important;
     }
     
-    /* "Szabályok" felirat: felette nincs hely, alatta pici biztonsági távolság */
     h3 { 
         font-size: 1.1rem !important; 
         margin-top: 0px !important; 
@@ -39,7 +37,6 @@ st.markdown("""
         padding-bottom: 0px !important;
     }
     
-    /* Listaelemek (szabálypontok) */
     p, li { 
         font-size: 0.85rem !important; 
         line-height: 1.2 !important; 
@@ -140,9 +137,11 @@ if a is not None and b is not None:
             unsafe_allow_html=True
         )
 
-    st.markdown(f"<h1 style='text-align: center; font-size: 80px;'>{diff_abs}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='text-align: center;'>{'Különbség (korty)' if diff_abs != 0 else 'HÚZÓRA!'}</h3>", unsafe_allow_html=True)
+    # Eredmény kijelzése több helyhagyással
+    st.markdown(f"<h1 style='text-align: center; font-size: 80px; margin-top: 20px; margin-bottom: 10px;'>{diff_abs}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center; margin-bottom: 30px;'>{'Különbség (korty)' if diff_abs != 0 else 'HÚZÓRA!'}</h3>", unsafe_allow_html=True)
     
+    # Új kör gomb - kapott egy kis extra távolságot felülről
     if st.button("✨ ÚJ KÖR", use_container_width=True, type="primary"):
         reset_room(room)
         st.rerun()
