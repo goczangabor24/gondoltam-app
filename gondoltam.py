@@ -23,14 +23,12 @@ st.markdown("""
         padding-right: 1rem !important;
     }
     
-    /* Cím: nincs alsó margó */
     h1 { 
         font-size: 1.8rem !important; 
         margin-bottom: 0px !important; 
         padding-bottom: 0px !important;
     }
     
-    /* Szabályok cím: nulla felső margó, minimális alsó */
     h3 { 
         font-size: 1.1rem !important; 
         margin-top: 0px !important; 
@@ -38,7 +36,6 @@ st.markdown("""
         padding-top: 0px !important;
     }
     
-    /* Listaelemek: sűrű sorköz, de nincs negatív margó */
     p, li { 
         font-size: 0.85rem !important; 
         line-height: 1.1 !important; 
@@ -46,7 +43,6 @@ st.markdown("""
         margin-top: 0px !important;
     }
     
-    /* Markdown blokkok közötti felesleges hely eltüntetése */
     .element-container, .stMarkdown {
         margin-bottom: 0px !important;
     }
@@ -69,9 +65,11 @@ def get_or_assign_role(room_code, user_id):
         if room_code not in store["rooms"]:
             store["rooms"][room_code] = {"A": None, "B": None, "updated": 0, "players": {}}
         room_state = store["rooms"][room_code]
-        if "players" not in room_state: room_state["players"] = {}
+        if "players" not in room_state:
+            room_state["players"] = {}
         players = room_state["players"]
-        if user_id in players: return players[user_id]
+        if user_id in players:
+            return players[user_id]
         taken_roles = players.values()
         role = "A" if "A" not in taken_roles else ("B" if "B" not in taken_roles else "A")
         players[user_id] = role
@@ -87,10 +85,11 @@ def submit_value(room: str, player: str, value: float):
 def reset_room(room: str):
     store = get_store()
     with store["lock"]:
-        if room in store["rooms"]:
-            store["rooms"][room]["A"] = None
-            store["rooms"][room]["B"] = None
-            store["rooms"][room]["updated"] = int(time.time())
+        if room not in store["rooms"]:
+            store["rooms"][room] = {"A": None, "B": None, "updated": 0, "players": {}}
+        store["rooms"][room]["A"] = None
+        store["rooms"][room]["B"] = None
+        store["rooms"][room]["updated"] = int(time.time())
 
 def get_room(room: str):
     store = get_store()
@@ -102,6 +101,13 @@ st.title("🍺 Gondoltam")
 
 room_input = st.sidebar.text_input("Szoba", value="buli-1").strip()
 room = room_input
+
+# ELSŐ BETÖLTÉSKOR mindig tiszta kör legyen
+init_key = f"initialized_{room}"
+if init_key not in st.session_state:
+    reset_room(room)
+    st.session_state[init_key] = True
+
 room_state = get_room(room)
 a, b = room_state.get("A"), room_state.get("B")
 last_update = room_state.get("updated", 0)
