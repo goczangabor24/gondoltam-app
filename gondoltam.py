@@ -204,11 +204,12 @@ else:
     # --- JÁTÉK NÉZET ---
     st.markdown("""
     ### Szabályok:
-    1. Ugyanaz a kód legyen a haverotokkal!
+    1. Ugyanaz a szoba kód legyen a haverotokkal!
     2. Válasszátok ki, ki az A és B játékos!
-    3. Mindketten írjatok be egy számot **1 és 10** között!
-    4. Nyomjátok meg a **Gondoltam** gombot!
-    5. Aki épp soron van, a különbséget meg kell, hogy igya!
+    3. Az első játékos gondoljon egy számra, **1 és 10** között!
+    4. A második játékos próbálja meg kitalálni, ha nem sikerült, a különbséget meg kell innia!
+    5. Ha sikerül kitalálni, az első játékosnak kell húzóra meginnia, ami előtte van!
+    6. Cserélgessétek felváltva ki gondol és ki tippel!
     """)
 
     st.divider()
@@ -241,3 +242,4 @@ else:
 
     time.sleep(1)
     st.rerun()
+
