@@ -8,7 +8,6 @@ st.set_page_config(page_title="Gondoltam", page_icon="🍺", layout="centered")
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
-# CSS: Biztonságos tömörítés (egymásra csúszás nélkül)
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -59,50 +58,88 @@ st.markdown("""
 def get_store():
     return {"lock": threading.Lock(), "rooms": {}}
 
-def get_or_assign_role(room_code, user_id):
+def ensure_room(room_code):
     store = get_store()
     with store["lock"]:
         if room_code not in store["rooms"]:
-            store["rooms"][room_code] = {"A": None, "B": None, "updated": 0, "players": {}}
+            store["rooms"][room_code] = {
+                "A": None,
+                "B": None,
+                "updated": 0,
+                "players": {},
+                "submitted_roles": {},
+                "error": None,
+            }
+
+def get_or_assign_role(room_code, user_id):
+    ensure_room(room_code)
+    store = get_store()
+    with store["lock"]:
         room_state = store["rooms"][room_code]
-        if "players" not in room_state:
-            room_state["players"] = {}
         players = room_state["players"]
+
         if user_id in players:
             return players[user_id]
+
         taken_roles = players.values()
         role = "A" if "A" not in taken_roles else ("B" if "B" not in taken_roles else "A")
         players[user_id] = role
         return role
 
-def submit_value(room: str, player: str, value: float):
+def submit_value(room: str, user_id: str, player: str, value: float):
+    ensure_room(room)
     store = get_store()
     with store["lock"]:
-        room_state = store["rooms"].setdefault(room, {"A": None, "B": None, "updated": 0, "players": {}})
+        room_state = store["rooms"][room]
+
+        # eltároljuk, ki milyen role-lal küldött be
+        room_state["submitted_roles"][user_id] = player
+
+        # eltároljuk a választott számot
         room_state[player] = value
         room_state["updated"] = int(time.time())
+        room_state["error"] = None
+
+        submitted_roles = list(room_state["submitted_roles"].values())
+
+        # ha már két külön user küldött be, ellenőrizzük a szerepeket
+        if len(room_state["submitted_roles"]) >= 2:
+            first_two = submitted_roles[:2]
+            if first_two[0] == first_two[1] == "A":
+                room_state["A"] = None
+                room_state["B"] = None
+                room_state["submitted_roles"] = {}
+                room_state["updated"] = int(time.time())
+                room_state["error"] = "Hülyék, nem lehettek mindketten A játékosok!"
+            elif first_two[0] == first_two[1] == "B":
+                room_state["A"] = None
+                room_state["B"] = None
+                room_state["submitted_roles"] = {}
+                room_state["updated"] = int(time.time())
+                room_state["error"] = "Hülyék, nem lehettek mindketten B játékosok!"
 
 def reset_room(room: str):
+    ensure_room(room)
     store = get_store()
     with store["lock"]:
-        if room not in store["rooms"]:
-            store["rooms"][room] = {"A": None, "B": None, "updated": 0, "players": {}}
         store["rooms"][room]["A"] = None
         store["rooms"][room]["B"] = None
         store["rooms"][room]["updated"] = int(time.time())
+        store["rooms"][room]["submitted_roles"] = {}
+        store["rooms"][room]["error"] = None
 
 def get_room(room: str):
+    ensure_room(room)
     store = get_store()
     with store["lock"]:
-        return dict(store["rooms"].get(room, {"A": None, "B": None, "updated": 0, "players": {}}))
+        return dict(store["rooms"][room])
 
 # --- UI ---
 st.title("🍺 Gondoltam")
 
-room_input = st.sidebar.text_input("Szoba", value="buli-1").strip()
+room_input = st.sidebar.text_input("Szoba", value="kecskesajt").strip()
 room = room_input
 
-# ELSŐ BETÖLTÉSKOR mindig tiszta kör legyen
 init_key = f"initialized_{room}"
 if init_key not in st.session_state:
     reset_room(room)
@@ -111,9 +148,28 @@ if init_key not in st.session_state:
 room_state = get_room(room)
 a, b = room_state.get("A"), room_state.get("B")
 last_update = room_state.get("updated", 0)
+error_message = room_state.get("error")
 assigned_role = get_or_assign_role(room, st.session_state.user_id)
 
-if a is not None and b is not None:
+# --- HIBA NÉZET ---
+if error_message:
+    st.markdown(f"""
+        <div style="text-align:center; margin-top: 60px;">
+            <div style="font-size: 80px;">🚫</div>
+            <div style="font-size: 28px; font-weight: bold; color: #FF4B4B; margin-top: 20px;">
+                {error_message}
+            </div>
+            <div style="font-size: 18px; margin-top: 20px;">
+                Az oldal újratölt...
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    time.sleep(2)
+    reset_room(room)
+    st.rerun()
+
+elif a is not None and b is not None:
     # --- EREDMÉNY NÉZET ---
     diff_abs = int(abs(a - b))
     elapsed = time.time() - last_update
@@ -148,12 +204,11 @@ else:
     # --- JÁTÉK NÉZET ---
     st.markdown("""
     ### Szabályok:
-    1. Ugyanaz a szobakód legyen a haveroddal!
+    1. Ugyanaz a kód legyen a haverotokkal!
     2. Válasszátok ki, ki az A és B játékos!
-    3. Az első játékos írjon be egy számot **1** és **10** között!
-    4. A második játékos próbálja meg kitalálni, ha nem sikerül, a különbséget meg kell innia.
-    5. Ha sikerül, akkor az első játékosnak kell húzóra meginnia, ami előtte van.
-    6. Cserlégessétek felváltva ki gondol, és ki tippel!
+    3. Mindketten írjatok be egy számot **1 és 10** között!
+    4. Nyomjátok meg a **Gondoltam** gombot!
+    5. Aki épp soron van, a különbséget meg kell, hogy igya!
     """)
 
     st.divider()
@@ -165,10 +220,17 @@ else:
         role_index = 0 if assigned_role == "A" else 1
         player = st.radio("Te vagy:", ["A", "B"], index=role_index, horizontal=True)
 
-    value = st.number_input("Melyik számra gondoltál? (1-10)", min_value=1.0, max_value=10.0, value=1.0, step=1.0, format="%.0f")
+    value = st.number_input(
+        "Melyik számra gondoltál? (1-10)",
+        min_value=1.0,
+        max_value=10.0,
+        value=1.0,
+        step=1.0,
+        format="%.0f"
+    )
 
     if st.button("Gondoltam", use_container_width=True, type="primary"):
-        submit_value(room, player, float(value))
+        submit_value(room, st.session_state.user_id, player, float(value))
         st.rerun()
 
     st.divider()
@@ -179,4 +241,3 @@ else:
 
     time.sleep(1)
     st.rerun()
-
